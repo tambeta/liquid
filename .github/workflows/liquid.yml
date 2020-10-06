@@ -1,0 +1,35 @@
+name: Liquid
+on: [push]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.allowed-failure }}
+    strategy:
+      matrix:
+        ruby: [2.4, 2.5, 2.6, 2.7]
+        allowed-failure: [false]
+        include:
+          - ruby: ruby-head
+            allowed-failure: true
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+      - uses: actions/cache@v1
+        with:
+          path: vendor/bundle
+      - run: bundle install --jobs=3 --retry=3 --path=${BUNDLE_PATH:-vendor/bundle}
+      - run: bundle exec rake
+  memory_profile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 2.7
+      - uses: actions/cache@v1
+        with:
+          path: vendor/bundle
+      - run: bundle install --jobs=3 --retry=3 --path=${BUNDLE_PATH:-vendor/bundle}
+      - run: bundle exec rake memory_profile:run
